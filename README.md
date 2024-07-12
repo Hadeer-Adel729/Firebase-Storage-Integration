@@ -28,7 +28,6 @@ Firebase Configuration
 
 Deployment
 ----------
-Use these commands:
 
 1.Install the Firebase CLI:
 
