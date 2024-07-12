@@ -41,3 +41,9 @@ Initialize Firebase in your project directory:
 Deploy your web application:
 
       firebase deploy
+
+Hosting
+-------
+You can access the hosted application at:
+
+[Firebase Image Integration App](https://webapp-b7d29.web.app)
