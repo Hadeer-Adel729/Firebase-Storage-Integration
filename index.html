@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Firebase</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Include Firebase SDK script -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f3f7;
+            text-align: center;
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #cccccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #654caf;
+            color: rgb(255, 255, 255);
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #5045a0;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background-color: #ffffffec;
+        }
+
+        .container {
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+ <div class="container">
+    <!------------------------------ Realtime Database ----------------------------------->
+    <label>ID:</label>
+    <input type="number" id="id" placeholder="Enter user ID">
+    <br>
+    <input type="file" id="imageUpload" multiple>
+    <br>
+    <button id="upload">Upload Image</button>
+    <button id="retrieve">Retrieve Images</button>
+
+    <table id="imageTable">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Download Link</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getDatabase, ref, set, push, get, child, remove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+        import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2l5qKRnA-y54CTOWnpT6I0yXgC0ZBRdI",
+            authDomain: "webapp-b7d29.firebaseapp.com",
+            databaseURL: "https://webapp-b7d29-default-rtdb.firebaseio.com",
+            projectId: "webapp-b7d29",
+            storageBucket: "webapp-b7d29.appspot.com",
+            messagingSenderId: "530449007701",
+            appId: "1:530449007701:web:740e10b6068db25093c0dc",
+            measurementId: "G-5KHQMWMT7Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const storage = getStorage(app);
+        //selects the table body where images will be displayed.
+        const imageTableBody = document.querySelector('#imageTable tbody');
+
+        // Function to render images in the table
+        function renderImages() {
+            // Clear the existing table content
+            imageTableBody.innerHTML = '';
+            // Get user ID from input
+            const userId = document.getElementById('id').value;
+
+            // Retrieve images for the user from realtime database
+            get(child(ref(database), `users/${userId}/images`)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    // Iterate over each image url
+                    snapshot.forEach((childSnapshot) => {
+                        //retrieves the image URL of the child snapshot.
+                        const imageUrl = childSnapshot.val();
+
+                        //creates a new table row element for each image.
+                        const imgRow = document.createElement('tr');
+
+                      // Create table cells for (user ID, image link, and delete button)
+                     // Append them to the table row
+                    // Append the row to the table body
+                        const userIdCell = document.createElement('td');
+                        userIdCell.textContent = userId;
+                        imgRow.appendChild(userIdCell);
+
+                        const imgCell = document.createElement('td');
+                        const imgLink = document.createElement('a');
+                        imgLink.href = imageUrl;
+                        imgLink.textContent = imageUrl;
+                        //opens the link in a new tab when clicked.
+                        imgLink.target = "_blank";
+                        imgCell.appendChild(imgLink);
+                        imgRow.appendChild(imgCell);
+
+                        const deleteCell = document.createElement('td');
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.textContent = 'Delete';
+                        deleteBtn.addEventListener('click', () => {
+                            const imageRef = childSnapshot.ref;
+                            // delete from Firebase Storage.
+                            deleteObjectFromStorage(imageUrl).then(() => {
+                               // delete from Realtime Database. 
+                                remove(imageRef).then(() => {
+                                    console.log('Record deleted from database and storage');//debug
+                                    renderImages();//updates the table content 
+                                });
+                            }).catch((error) => {
+                                console.error('Error deleting record:', error);
+                            });
+                        });
+                        deleteCell.appendChild(deleteBtn);
+                        imgRow.appendChild(deleteCell);
+
+                        imageTableBody.appendChild(imgRow);
+                    });
+                } else {
+                    console.log("No data available");//debug
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+        }
+
+        // Function to upload image
+        function uploadImage(imageFile) {
+
+            const userId = document.getElementById('id').value;
+
+             //helps in organizing images within Firebase Storage and allows 
+            // easy retrieval based on user ID and file name.
+            const storagePath = `images/${userId}/${imageFile.name}`;
+
+     //creates a reference to the location in Firebase Storage where the image will be stored
+            const imageStorageRef = sRef(storage, storagePath);
+
+            // Upload image to Firebase Storage
+            uploadBytes(imageStorageRef, imageFile).then((snapshot) => {
+                // Get the download URL of the uploaded image
+               // Save the download URL to the Realtime Database
+                getDownloadURL(snapshot.ref).then((downloadURL) => {
+                    const imagesRef = ref(database, `users/${userId}/images`);
+                    const newImageRef = push(imagesRef);
+                    set(newImageRef, downloadURL).then(() => {
+                        console.log('File URL saved to database!');//depug
+                        renderImages();//display the link of the image in the table
+                    });
+                });
+            });
+        }
+
+        // Function to delete image from database storage
+        function deleteObjectFromStorage(imageUrl) {
+            const imageRef = sRef(storage, imageUrl);
+            
+            return deleteObject(imageRef);
+        }
+
+        // Upload button event listener
+        document.getElementById('upload').addEventListener('click', () => {
+        // When upload button is clicked, upload selected images
+            const files = document.getElementById('imageUpload').files;
+            for (let i = 0; i < files.length; i++) {
+                uploadImage(files[i]);
+            }
+        });
+
+        // Retrieve button event listener
+        document.getElementById('retrieve').addEventListener('click', () => {
+             // When retrieve button is clicked, render images
+            renderImages();
+        });
+    </script>
+</body>
+
+</html>
