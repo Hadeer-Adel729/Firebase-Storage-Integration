@@ -28,14 +28,16 @@ Firebase Configuration
 
 Deploy Web Application
 -----------------------
+Use these commands:
+
 1.Install the Firebase CLI:
 
-  npm install -g firebase-tools
+      npm install -g firebase-tools
 
 Initialize Firebase in your project directory:
 
-  firebase init
+      firebase init
   
 Deploy your web application:
 
-  firebase deploy
+      firebase deploy
