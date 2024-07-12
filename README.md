@@ -26,8 +26,8 @@ Firebase Configuration
 
 5.Replace the placeholder values in the firebaseConfig object in the HTML file with your Firebase project's configuration.
 
-Deploy Web Application
------------------------
+Deployment
+----------
 Use these commands:
 
 1.Install the Firebase CLI:
