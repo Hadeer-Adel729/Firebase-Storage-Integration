@@ -16,13 +16,13 @@ Firebase Hosting and JavaScript Client:
 
 Firebase Configuration
 ----------------------
-1.Create a Firebase project in the Firebase Console.
+1.Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/u/0/).
 
 2.Enable Firebase Storage and Firebase Realtime Database in the Firebase Console.
 
 3.Add your web app to the same Firebase project.
 
-4.Obtain your Firebase project's configuration object (firebaseConfig).
+4.Obtain your Firebase project's configuration object (      firebaseConfig).
 
 5.Replace the placeholder values in the firebaseConfig object in the HTML file with your Firebase project's configuration.
 
